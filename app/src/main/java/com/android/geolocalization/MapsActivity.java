@@ -12,7 +12,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -22,15 +21,18 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
+{
     private GoogleMap mMap;
-    Context context;
+    static Context context;
     Marker now;
     double latitude;
     double longitude;
     LocationManager mLocationManager;
+    ArrayList<Plant> plants;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +69,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         mMap.setMyLocationEnabled(true);
 
-        final LocationListener locationListener = new LocationListener() {
+        final LocationListener locationListener = new LocationListener()
+        {
             public void onLocationChanged(Location location)
             {
                 updateLocation(getLastKnownLocation());
@@ -91,6 +94,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        plants = DataBase.getPlants();
+        for (Plant plant : plants)
+            mMap.addMarker(new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())));
     }
 
     private void updateLocation(Location location)
