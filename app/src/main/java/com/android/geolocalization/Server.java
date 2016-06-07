@@ -7,7 +7,6 @@ package com.android.geolocalization;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,7 +46,7 @@ public class Server extends AsyncTask<String, Void, JSONArray>
             {
                 public void run()
                 {
-                    Toast.makeText(MapsActivity.context, "Error: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
                 }
             });
         }
@@ -57,7 +56,7 @@ public class Server extends AsyncTask<String, Void, JSONArray>
             {
                 public void run()
                 {
-                    Toast.makeText(MapsActivity.context, "Error: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
                 }
             });
         } catch (final JSONException e)
@@ -66,7 +65,7 @@ public class Server extends AsyncTask<String, Void, JSONArray>
             {
                 public void run()
                 {
-                    Toast.makeText(MapsActivity.context, "Error: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
                 }
             });
         }

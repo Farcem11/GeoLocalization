@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
  */
 public class Plant
 {
+    private int _Id;
     private String _Name;
     private Bitmap _Image;
     private double _Latitude;
@@ -14,13 +15,22 @@ public class Plant
     private String _Planter;
     private String _Donor;
 
-    public Plant(String _Name, Bitmap _Image, double _Latitude, double _Longitude, String _Planter, String _Donor) {
+    public Plant(int _Id, String _Name, Bitmap _Image, double _Latitude, double _Longitude, String _Planter, String _Donor)
+    {
+        this._Id = _Id;
         this._Name = _Name;
         this._Image = _Image;
         this._Latitude = _Latitude;
         this._Longitude = _Longitude;
         this._Planter = _Planter;
         this._Donor = _Donor;
+    }
+    public int get_Id() {
+        return _Id;
+    }
+
+    public void set_Id(int _Id) {
+        this._Id = _Id;
     }
 
     public String get_Name() {

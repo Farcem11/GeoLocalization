@@ -5,9 +5,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -21,31 +26,43 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 {
     private GoogleMap mMap;
     static Context context;
-    Marker now;
     double latitude;
     double longitude;
     LocationManager mLocationManager;
     ArrayList<Plant> plants;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        context = this;
+    protected void onCreate(Bundle savedInstanceState)
+    {
         final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        mapFragment.getMapAsync(this);
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER))
         {
             buildAlertMessage("Your GPS is disabled, please enabled it");
         }
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_maps);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+        context = this;
     }
 
     private void buildAlertMessage(String pMessage) {
@@ -94,6 +111,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
+        Bitmap image = null;
+        try
+        {
+            image = new getBitmapFromURL().execute("http://i.ggimgs.net/categories/387.jpg").get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        DataBase.addPlant(new Plant(0, "Planta 3", image, 9.9753042, -84.0184231, "Kevin", "Kevin"));
+
         plants = DataBase.getPlants();
         for (Plant plant : plants)
             mMap.addMarker(new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())));
@@ -101,13 +130,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void updateLocation(Location location)
     {
-        if (now != null)
-            now.remove();
         longitude = location.getLongitude();
         latitude = location.getLatitude();
         LatLng myLocation = new LatLng(location.getLatitude(), location.getLongitude());
-        now = mMap.addMarker(new MarkerOptions().position(myLocation).title("Me"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,20));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,15));
     }
 
     private Location getLastKnownLocation()
@@ -129,5 +155,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         else
             return null;
+    }
+
+    private class getBitmapFromURL extends AsyncTask<String, Void, Bitmap>
+    {
+        protected Bitmap doInBackground(String... pUrl)
+        {
+            try
+            {
+                URL url = new URL(pUrl[0]);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                Bitmap myBitmap = BitmapFactory.decodeStream(input);
+                return myBitmap;
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+                return null;
+            }
+        }
     }
 }

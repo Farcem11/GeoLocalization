@@ -2,12 +2,13 @@ package com.android.geolocalization;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.widget.Toast;
-
+import android.util.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
@@ -17,6 +18,9 @@ import java.util.concurrent.ExecutionException;
 public class DataBase
 {
     private static String getPlantsURL = "http://gramalab.esy.es/getPlants.php";
+    private static String addPlantURL = "http://gramalab.esy.es/addPlant.php";
+    private static String charset = "UTF-8";
+
     public static ArrayList<Plant> getPlants()
     {
         ArrayList<Plant> plants = new ArrayList<>();
@@ -26,23 +30,47 @@ public class DataBase
             JSONObject jsonObject;
             byte[] byteArray;
             Bitmap image;
-            for (int i = 0; i < responseJSON.length(); i++)
+            for (int i = 0; responseJSON != null && i < responseJSON.length(); i++)
             {
                 jsonObject = responseJSON.getJSONObject(i);
-                byteArray = jsonObject.getString("Image").getBytes();
+                byteArray = Base64.decode(jsonObject.getString("Image"), Base64.DEFAULT);
                 image = BitmapFactory.decodeByteArray(byteArray, 0 ,byteArray.length);
-                plants.add(new Plant(jsonObject.getString("Name"), image, jsonObject.getDouble("Latitude"), jsonObject.getDouble("Longitude"), jsonObject.getString("Planter"), jsonObject.getString("Donor")));
+                plants.add(new Plant(jsonObject.getInt("idPlant"),jsonObject.getString("Name"), image, jsonObject.getDouble("Latitude"), jsonObject.getDouble("Longitude"), jsonObject.getString("Planter"), jsonObject.getString("Donor")));
             }
             return plants;
         }
         catch (InterruptedException e) {
-            Toast.makeText(MapsActivity.context, "Error: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-        }
-        catch (ExecutionException e) {
-            Toast.makeText(MapsActivity.context, "Error: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         } catch (JSONException e) {
-            Toast.makeText(MapsActivity.context, "Error: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
         }
         return null;
+    }
+    static void addPlant(Plant plant)
+    {
+        try
+        {
+            String query = String.format("Name=%s&Image=%s&Latitude=%s&Longitude=%s&Planter=%s&Donor=%s",
+                    URLEncoder.encode(plant.get_Name(), charset),
+                    URLEncoder.encode(BitMapToString(plant.get_Image()), charset),
+                    URLEncoder.encode(String.valueOf(plant.get_Latitude()), charset),
+                    URLEncoder.encode(String.valueOf(plant.get_Longitude()), charset),
+                    URLEncoder.encode(plant.get_Planter(), charset),
+                    URLEncoder.encode(plant.get_Donor(), charset));
+            new Server().execute(addPlantURL, query);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String BitMapToString(Bitmap bitmap)
+    {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] b = baos.toByteArray();
+        return Base64.encodeToString(b, Base64.DEFAULT);
     }
 }
