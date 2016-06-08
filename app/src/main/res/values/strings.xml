@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">GeoLocalization</string>
     <string name="title_activity_maps">Map</string>
+    <string name="hint_plant_name">Nombre de la planta</string>
+    <string name="hint_person_who_planted">Voluntario que plantó</string>
+    <string name="hint_person_who_donated">Voluntario que donó</string>
+    <string name="err_msg_plant_name">Campo requerido</string>
+    <string name="err_msg_person_who_planted">Campo requerido</string>
+    <string name="err_person_who_donated">Campo requerido</string>
 </resources>

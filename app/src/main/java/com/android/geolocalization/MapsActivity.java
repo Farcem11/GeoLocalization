@@ -1,31 +1,32 @@
 package com.android.geolocalization;
 
 import android.Manifest;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.clans.fab.FloatingActionButton;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -33,34 +34,43 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
-{
-    private GoogleMap mMap;
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    //Take Picture
+    private static final String TAG = "MainActivity";
     static Context context;
     double latitude;
     double longitude;
     LocationManager mLocationManager;
     ArrayList<Plant> plants;
+    private GoogleMap mMap;
     private HashMap<Marker, Plant> markerMapPlant = new HashMap<>();
+    private Bitmap mImageBitmap;
+    private String mCurrentPhotoPath;
+
+    //form
+    private EditText inputPlantName;
+    private EditText inputPersonWhoPlanted;
+    private EditText inputPersonWhoDonated;
+
+    private File storageDir;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-        {
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             buildAlertMessage("Your GPS is disabled, please enabled it");
         }
         super.onCreate(savedInstanceState);
@@ -68,6 +78,73 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         context = this;
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.menu_item_new_plant);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dispatchTakePictureIntent();
+            }
+        });
+    }
+
+    private void dispatchTakePictureIntent() {
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (cameraIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                Log.e(TAG, "exception", ex);
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE);
+            }
+        }
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        storageDir = Environment.getExternalStoragePublicDirectory("GeoLocalization");
+        storageDir.mkdirs();
+        File image = File.createTempFile(
+                imageFileName,  // prefix
+                ".jpg",         // suffix
+                storageDir      // directory
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = "file:" + image.getAbsolutePath();
+        return image;
+    }
+
+    void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory())
+            for (File child : fileOrDirectory.listFiles())
+                deleteRecursive(child);
+
+        fileOrDirectory.delete();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            try {
+                mImageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(mCurrentPhotoPath));
+                //showPlant(new Plant(1,"Nueva",mImageBitmap,2,2,"loc","log2"));
+                createPlant();
+                //mImageView.setImageBitmap(mImageBitmap);
+                deleteRecursive(storageDir);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void buildAlertMessage(String pMessage) {
@@ -83,8 +160,48 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         alert.show();
     }
 
-    public void showPlant(Plant plant)
-    {
+    public void createPlant() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        final View dialogView = inflater.inflate(R.layout.dialog_create_plant, null);
+
+
+        ((ImageView) dialogView.findViewById(R.id.imageViewNewPlant)).setImageBitmap(mImageBitmap);
+        inputPlantName = (EditText) dialogView.findViewById(R.id.input_plant_name);
+        inputPersonWhoPlanted = (EditText) dialogView.findViewById(R.id.input_person_who_planted);
+        inputPersonWhoDonated = (EditText) dialogView.findViewById(R.id.input_person_who_donated);
+
+        builder.setView(dialogView)
+                .setNegativeButton("CANCELAR",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        })
+                .setPositiveButton("GUARDAR",
+                        new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                String name = inputPlantName.getText().toString();
+                                String planter = inputPersonWhoPlanted.getText().toString();
+                                String donor = inputPersonWhoDonated.getText().toString();
+                                Location location = getLastKnownLocation();
+                                Plant plant = new Plant(1, name, mImageBitmap, location.getLatitude(), location.getLongitude(), planter, donor);
+                                DataBase.addPlant(plant);
+                                Toast.makeText(builder.getContext(), "Guardado", Toast.LENGTH_SHORT);
+                                dialog.dismiss();
+                            }
+                        });
+
+        final AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    public void showPlant(Plant plant) {
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.plant_info, null);
@@ -94,14 +211,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ((ImageView) dialogView.findViewById(R.id.imageViewPlant)).setImageBitmap(plant.get_Image());
 
         builder.setView(dialogView)
-        .setPositiveButton("Cerrar", new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialog, int id)
-            {
-                dialog.cancel();
-            }
-        });
+                .setPositiveButton("Cerrar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
 
         final AlertDialog alert = builder.create();
         alert.show();
@@ -110,11 +225,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener()
-        {
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
-            public boolean onMarkerClick(Marker marker)
-            {
+            public boolean onMarkerClick(Marker marker) {
                 showPlant(markerMapPlant.get(marker));
                 return false;
             }
@@ -123,10 +236,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         mMap.setMyLocationEnabled(true);
 
-        final LocationListener locationListener = new LocationListener()
-        {
-            public void onLocationChanged(Location location)
-            {
+        final LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
                 updateLocation(getLastKnownLocation());
             }
 
@@ -162,23 +273,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 */
         plants = DataBase.getPlants();
         markerMapPlant.clear();
-        for (Plant plant : plants)
-        {
+        for (Plant plant : plants) {
             Marker marker = mMap.addMarker(new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())));
             markerMapPlant.put(marker, plant);
         }
     }
 
-    private void updateLocation(Location location)
-    {
+    private void updateLocation(Location location) {
         longitude = location.getLongitude();
         latitude = location.getLatitude();
         LatLng myLocation = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,20));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation, 20));
     }
 
-    private Location getLastKnownLocation()
-    {
+    private Location getLastKnownLocation() {
         mLocationManager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
         List<String> providers = mLocationManager.getProviders(true);
         Location bestLocation = null;
@@ -193,17 +301,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
             return bestLocation;
-        }
-        else
+        } else
             return null;
     }
 
-    private class getBitmapFromURL extends AsyncTask<String, Void, Bitmap>
-    {
-        protected Bitmap doInBackground(String... pUrl)
-        {
-            try
-            {
+    private class getBitmapFromURL extends AsyncTask<String, Void, Bitmap> {
+        protected Bitmap doInBackground(String... pUrl) {
+            try {
                 URL url = new URL(pUrl[0]);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setDoInput(true);
@@ -211,9 +315,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 InputStream input = connection.getInputStream();
                 Bitmap myBitmap = BitmapFactory.decodeStream(input);
                 return myBitmap;
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 e.printStackTrace();
                 return null;
             }
