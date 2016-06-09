@@ -1,6 +1,7 @@
 package com.android.geolocalization;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -55,8 +56,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     double longitude;
     LocationManager mLocationManager;
     ArrayList<Plant> plants;
-    private GoogleMap mMap;
-    private HashMap<Marker, Plant> markerMapPlant = new HashMap<>();
+    public static GoogleMap mMap;
+    public static HashMap<Marker, Plant> markerMapPlant = new HashMap<>();
     private Bitmap mImageBitmap;
     private String mCurrentPhotoPath;
 
@@ -66,13 +67,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private EditText inputPersonWhoDonated;
 
     private File storageDir;
-
+    public static LocationManager manager;
+    boolean isZoom = false;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            buildAlertMessage("Your GPS is disabled, please enabled it");
-        }
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+            buildEnableGPSMessage("Por favor habilita el GPS");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -134,12 +137,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            try {
-                mImageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(mCurrentPhotoPath));
-                //showPlant(new Plant(1,"Nueva",mImageBitmap,2,2,"loc","log2"));
-                createPlant();
-                //mImageView.setImageBitmap(mImageBitmap);
-                deleteRecursive(storageDir);
+            try
+            {
+                if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                    buildEnableGPSMessage("Por favor habilita el GPS");
+                else
+                {
+                    mImageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(mCurrentPhotoPath));
+                    //showPlant(new Plant(1,"Nueva",mImageBitmap,2,2,"loc","log2"));
+                    createPlant();
+                    //mImageView.setImageBitmap(mImageBitmap);
+                    deleteRecursive(storageDir);
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -147,11 +156,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void buildAlertMessage(String pMessage) {
+    private void buildEnableGPSMessage(String pMessage) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(pMessage)
                 .setCancelable(false)
-                .setPositiveButton("Enable", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Habilitar", new DialogInterface.OnClickListener() {
                     public void onClick(final DialogInterface dialog, final int id) {
                         startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                     }
@@ -183,16 +192,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         new DialogInterface.OnClickListener() {
 
                             @Override
-                            public void onClick(DialogInterface dialog, int which) {
-
+                            public void onClick(DialogInterface dialog, int which)
+                            {
                                 String name = inputPlantName.getText().toString();
                                 String planter = inputPersonWhoPlanted.getText().toString();
                                 String donor = inputPersonWhoDonated.getText().toString();
-                                Location location = getLastKnownLocation();
-                                Plant plant = new Plant(1, name, mImageBitmap, location.getLatitude(), location.getLongitude(), planter, donor);
+                                Plant plant = new Plant(1, name, mImageBitmap, latitude, longitude, planter, donor);
+
                                 DataBase.addPlant(plant);
-                                Toast.makeText(builder.getContext(), "Guardado", Toast.LENGTH_SHORT);
                                 dialog.dismiss();
+                                Toast.makeText(context, "Guardado", Toast.LENGTH_SHORT).show();
                             }
                         });
 
@@ -219,6 +228,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 });
 
         final AlertDialog alert = builder.create();
+        alert.setCanceledOnTouchOutside(false);
         alert.show();
     }
 
@@ -235,10 +245,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             return;
         mMap.setMyLocationEnabled(true);
-
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         final LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                updateLocation(getLastKnownLocation());
+            public void onLocationChanged(Location location) 
+            {
+                if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) 
+                    buildEnableGPSMessage("Por favor habilita el GPS");
+                else
+                    updateLocation(getLastKnownLocation());
             }
 
             @Override
@@ -257,8 +271,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 20, locationListener);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 20, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 /*
         Bitmap image = null;
         try
@@ -273,17 +287,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 */
         plants = DataBase.getPlants();
         markerMapPlant.clear();
-        for (Plant plant : plants) {
+        for (Plant plant : plants)
+        {
             Marker marker = mMap.addMarker(new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())));
             markerMapPlant.put(marker, plant);
         }
     }
 
-    private void updateLocation(Location location) {
+    private void updateLocation(Location location)
+    {
         longitude = location.getLongitude();
         latitude = location.getLatitude();
-        LatLng myLocation = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation, 20));
+        LatLng myLocation = new LatLng(latitude, longitude);
+        if (isZoom)
+            mMap.animateCamera(CameraUpdateFactory.newLatLng(myLocation));
+        else 
+        {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation, 15));
+            isZoom = true;
+        }
     }
 
     private Location getLastKnownLocation() {

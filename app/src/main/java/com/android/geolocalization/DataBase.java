@@ -1,8 +1,16 @@
 package com.android.geolocalization;
 
+import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.util.Base64;
+import android.widget.Toast;
+
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -52,6 +61,7 @@ public class DataBase
     {
         try
         {
+            plant.set_Image(getResizedBitmap(plant.get_Image(), 800, 600));
             String query = String.format("Name=%s&Image=%s&Latitude=%s&Longitude=%s&Planter=%s&Donor=%s",
                     URLEncoder.encode(plant.get_Name(), charset),
                     URLEncoder.encode(BitMapToString(plant.get_Image()), charset),
@@ -59,9 +69,16 @@ public class DataBase
                     URLEncoder.encode(String.valueOf(plant.get_Longitude()), charset),
                     URLEncoder.encode(plant.get_Planter(), charset),
                     URLEncoder.encode(plant.get_Donor(), charset));
-            new Server().execute(addPlantURL, query);
+
+            new Server().execute(addPlantURL, query).get();
+            Marker marker = MapsActivity.mMap.addMarker(new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())));
+                MapsActivity.markerMapPlant.put(marker, plant);
 
         } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
             e.printStackTrace();
         }
     }
@@ -72,5 +89,21 @@ public class DataBase
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] b = baos.toByteArray();
         return Base64.encodeToString(b, Base64.DEFAULT);
+    }
+
+    public static Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        // "RECREATE" THE NEW BITMAP
+        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+        bm.recycle();
+        return resizedBitmap;
     }
 }

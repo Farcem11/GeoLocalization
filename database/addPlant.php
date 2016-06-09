@@ -10,6 +10,6 @@ $Longitude = (double)$_POST["Longitude"];
 $Planter = $_POST["Planter"];
 $Donor = $_POST["Donor"];
 
-echo $dataBase->doQuery("insert into Plants(Name, Image, Latitude, Longitude, Planter, Donor)values('$Name', $Image, $Latitude, $Longitude, '$Planter', '$Donor');");
+echo $dataBase->doQuery("insert into Plants(Name, Image, Latitude, Longitude, Planter, Donor)values('$Name', '$Image', $Latitude, $Longitude, '$Planter', '$Donor');");
 $dataBase->close();
 ?>
