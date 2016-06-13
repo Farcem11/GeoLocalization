@@ -7,4 +7,8 @@
     <string name="err_msg_plant_name">Campo requerido</string>
     <string name="err_msg_person_who_planted">Campo requerido</string>
     <string name="err_person_who_donated">Campo requerido</string>
+    <string name="activity">Activity</string>
+    <string name="event">Event</string>
+    <string name="exception">Exception</string>
+    <string name="crash">Crash</string>
 </resources>

@@ -30,6 +30,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -56,6 +58,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     static final int REQUEST_IMAGE_CAPTURE = 1;
     //Take Picture
     private static final String TAG = "MainActivity";
+    Tracker mTracker;
     static Context context;
     double latitude;
     double longitude;
@@ -83,6 +86,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             buildEnableGPSMessage("Por favor habilita el GPS");
 
         super.onCreate(savedInstanceState);
+
+        AnalyticsApplication application = (AnalyticsApplication) getApplication();
+        mTracker = application.getDefaultTracker();
+
         setContentView(R.layout.activity_maps);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -207,6 +214,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 String donor = inputPersonWhoDonated.getText().toString();
                                 final Plant plant = new Plant(1, name, mImageBitmap, latitude, longitude, planter, donor);
                                 loadingImage.setVisibility(View.VISIBLE);
+                                mTracker.send(new HitBuilders.EventBuilder()
+                                        .setCategory("Click")
+                                        .setAction("Add")
+                                        .setLabel("Plant")
+                                        .build());
                                 DataBase.addPlant(plant);
 //                                new CountDownTimer(3000, 1) {
 //                                    public void onFinish() {
@@ -254,6 +266,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
+                mTracker.send(new HitBuilders.EventBuilder()
+                        .setCategory("Click")
+                        .setAction("Plant")
+                        .setLabel("Show")
+                        .build());
                 showPlant(markerMapPlant.get(marker));
                 return false;
             }
@@ -361,5 +378,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return null;
             }
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i(TAG, "Setting screen name: " + "MapsActivity");
+        mTracker.setScreenName("Image~" + "MapsActivity");
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
     }
 }

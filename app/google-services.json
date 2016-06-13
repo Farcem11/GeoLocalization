@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "1003474413428",
+    "project_id": "infinite-hope-132723"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1003474413428:android:f287e1e2baef9550",
+        "android_client_info": {
+          "package_name": "com.android.geolocalization"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-re4LozYF-tby0Ved2Mg0J25_0iM1J4M"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 2,
+          "analytics_property": {
+            "tracking_id": "UA-79245205-1"
+          }
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
