@@ -1,7 +1,6 @@
 package com.android.geolocalization;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,7 +13,6 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
@@ -25,7 +23,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,31 +47,29 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     static final int REQUEST_IMAGE_CAPTURE = 1;
     //Take Picture
     private static final String TAG = "MainActivity";
+    public static GoogleMap mMap;
+    public static HashMap<Marker, Plant> markerMapPlant = new HashMap<>();
+    public static LocationManager manager;
     static Context context;
     double latitude;
     double longitude;
     LocationManager mLocationManager;
     ArrayList<Plant> plants;
-    public static GoogleMap mMap;
-    public static HashMap<Marker, Plant> markerMapPlant = new HashMap<>();
+    boolean isZoom = false;
     private Bitmap mImageBitmap;
     private String mCurrentPhotoPath;
-
     //form
     private EditText inputPlantName;
     private EditText inputPersonWhoPlanted;
     private EditText inputPersonWhoDonated;
     private ImageView loadingImage;
-
     private File storageDir;
-    public static LocationManager manager;
-    boolean isZoom = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -92,6 +87,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
                 dispatchTakePictureIntent();
+            }
+        });
+
+        FloatingActionButton fab2 = (FloatingActionButton) findViewById(R.id.menu_item_admin_plant);
+        fab2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Aquí Jasson
             }
         });
     }
