@@ -14,6 +14,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
@@ -24,6 +25,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +34,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -46,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -65,6 +70,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private EditText inputPlantName;
     private EditText inputPersonWhoPlanted;
     private EditText inputPersonWhoDonated;
+    private ImageView loadingImage;
 
     private File storageDir;
     public static LocationManager manager;
@@ -179,6 +185,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         inputPlantName = (EditText) dialogView.findViewById(R.id.input_plant_name);
         inputPersonWhoPlanted = (EditText) dialogView.findViewById(R.id.input_person_who_planted);
         inputPersonWhoDonated = (EditText) dialogView.findViewById(R.id.input_person_who_donated);
+        loadingImage = (ImageView) dialogView.findViewById(R.id.loadingImage);
+
 
         builder.setView(dialogView)
                 .setNegativeButton("CANCELAR",
@@ -192,15 +200,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         new DialogInterface.OnClickListener() {
 
                             @Override
-                            public void onClick(DialogInterface dialog, int which)
+                            public void onClick(final DialogInterface dialog, int which)
                             {
                                 String name = inputPlantName.getText().toString();
                                 String planter = inputPersonWhoPlanted.getText().toString();
                                 String donor = inputPersonWhoDonated.getText().toString();
-                                Plant plant = new Plant(1, name, mImageBitmap, latitude, longitude, planter, donor);
-
+                                final Plant plant = new Plant(1, name, mImageBitmap, latitude, longitude, planter, donor);
+                                loadingImage.setVisibility(View.VISIBLE);
                                 DataBase.addPlant(plant);
-                                dialog.dismiss();
+//                                new CountDownTimer(3000, 1) {
+//                                    public void onFinish() {
+//                                        loadingImage.setVisibility(View.GONE);
+//                                        dialog.dismiss();
+//                                    }
+//
+//                                    public void onTick(long millisUntilFinished) {
+//                                    }
+//                                }.start();
                                 Toast.makeText(context, "Guardado", Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -287,9 +303,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 */
         plants = DataBase.getPlants();
         markerMapPlant.clear();
+
+        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.tree);
         for (Plant plant : plants)
         {
-            Marker marker = mMap.addMarker(new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())));
+            MarkerOptions mOp = new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())).icon(icon);
+            Marker marker = mMap.addMarker(mOp);
             markerMapPlant.put(marker, plant);
         }
     }
