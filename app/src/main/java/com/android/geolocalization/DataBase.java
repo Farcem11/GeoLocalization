@@ -1,11 +1,9 @@
 package com.android.geolocalization;
 
-import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.util.Base64;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -14,11 +12,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -27,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 public class DataBase
 {
     private static String getPlantsURL = "http://gramalab.esy.es/getPlants.php";
+    private static String deletePlantsURL = "http://gramalab.esy.es/deletePlant.php";
     private static String addPlantURL = "http://gramalab.esy.es/addPlant.php";
     private static String charset = "UTF-8";
 
@@ -56,6 +55,21 @@ public class DataBase
             e.printStackTrace();
         }
         return null;
+    }
+
+    static void deletePlant(int pId) {
+        try {
+
+            String query = String.format("Id=%s",
+                    URLEncoder.encode(String.valueOf(pId), charset));
+            new Server().execute(deletePlantsURL, query).get();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
     }
     static void addPlant(Plant plant)
     {
