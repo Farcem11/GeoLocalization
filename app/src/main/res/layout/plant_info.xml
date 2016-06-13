@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:weightSum="1"
@@ -16,17 +16,20 @@
         android:textSize="30dp"
         android:textColor="#fff"
         android:shadowColor="#000"
-        android:shadowRadius="6" />
+        android:shadowRadius="6"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_margin="10dp" />
 
     <ImageView
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="200dp"
         android:id="@+id/imageViewPlant"
+        android:layout_weight="0.41"
+        android:padding="0dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/textViewName"
-        android:layout_weight="0.41"
-        android:padding="0dp" />
+        android:layout_marginTop="49dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -40,7 +43,13 @@
         android:shadowColor="#000"
         android:shadowRadius="6"
         android:text="Plantador"
-        android:padding="0dp" />
+        android:padding="0dp"
+        android:layout_below="@+id/textViewDonor"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textAlignment="center"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -51,11 +60,17 @@
         android:layout_weight="0.08"
         android:gravity="center_vertical|center_horizontal"
         android:textSize="20dp"
-        android:padding="5dp"
+        android:padding="0dp"
         android:textColor="#fff"
         android:shadowColor="#000"
         android:shadowRadius="6"
-        android:layout_gravity="center_horizontal" />
+        android:layout_gravity="center_horizontal"
+        android:layout_below="@+id/textView"
+        android:layout_alignRight="@+id/textViewDonor"
+        android:layout_alignEnd="@+id/textViewDonor"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textAlignment="center" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -68,7 +83,14 @@
         android:textSize="30dp"
         android:textColor="#fff"
         android:shadowColor="#000"
-        android:shadowRadius="6"/>
+        android:shadowRadius="6"
+        android:layout_below="@+id/imageViewPlant"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textAlignment="center"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:padding="0dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -79,10 +101,26 @@
         android:layout_weight="0.08"
         android:gravity="center_vertical|center_horizontal"
         android:textSize="20dp"
-        android:padding="5dp"
+        android:padding="0dp"
         android:textColor="#fff"
         android:shadowColor="#000"
         android:shadowRadius="6"
-        android:layout_gravity="center_horizontal" />
+        android:layout_gravity="center_horizontal"
+        android:layout_below="@+id/textView2"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="0dp" />
 
-</LinearLayout>
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:id="@+id/deleteButton"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:background="@drawable/delete"
+        android:layout_below="@+id/textViewPlanter"
+        android:layout_margin="15dp" />
+
+</RelativeLayout>

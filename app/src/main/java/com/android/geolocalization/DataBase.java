@@ -4,7 +4,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.util.Base64;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -17,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -48,27 +52,37 @@ public class DataBase
             return plants;
         }
         catch (InterruptedException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         } catch (ExecutionException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         } catch (JSONException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
         return null;
     }
 
-    static void deletePlant(int pId) {
-        try {
-
-            String query = String.format("Id=%s",
-                    URLEncoder.encode(String.valueOf(pId), charset));
+    static void deletePlant(Plant plant)
+    {
+        try
+        {
+            String query = String.format("Id=%s", URLEncoder.encode(String.valueOf(plant.get_Id()), charset));
             new Server().execute(deletePlantsURL, query).get();
+            MapsActivity.markerMapPlant.clear();
+            MapsActivity.mMap.clear();
+
+            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.tree);
+            for (Plant planta : DataBase.getPlants())
+            {
+                MarkerOptions mOp = new MarkerOptions().position(new LatLng(planta.get_Latitude(), planta.get_Longitude())).icon(icon);
+                Marker marker = MapsActivity.mMap.addMarker(mOp);
+                MapsActivity.markerMapPlant.put(marker, planta);
+            }
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         } catch (ExecutionException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
     }
     static void addPlant(Plant plant)
@@ -83,17 +97,16 @@ public class DataBase
                     URLEncoder.encode(String.valueOf(plant.get_Longitude()), charset),
                     URLEncoder.encode(plant.get_Planter(), charset),
                     URLEncoder.encode(plant.get_Donor(), charset));
-
             new Server().execute(addPlantURL, query).get();
             Marker marker = MapsActivity.mMap.addMarker(new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())));
-                MapsActivity.markerMapPlant.put(marker, plant);
+            MapsActivity.markerMapPlant.put(marker, plant);
 
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         } catch (ExecutionException e) {
-            e.printStackTrace();
+            Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

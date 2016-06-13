@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,7 +64,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     double latitude;
     double longitude;
     LocationManager mLocationManager;
-    ArrayList<Plant> plants;
     boolean isZoom = false;
     private Bitmap mImageBitmap;
     private String mCurrentPhotoPath;
@@ -168,7 +168,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
             } catch (IOException e) {
-                e.printStackTrace();
+                Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -183,6 +183,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                 });
         final AlertDialog alert = builder.create();
+        alert.setCanceledOnTouchOutside(false);
         alert.show();
     }
 
@@ -241,8 +242,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         alert.show();
     }
 
-    public void showPlant(Plant plant) {
-
+    public void showPlant(final Plant plant)
+    {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.plant_info, null);
@@ -250,15 +251,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ((TextView) dialogView.findViewById(R.id.textViewPlanter)).setText(plant.get_Planter());
         ((TextView) dialogView.findViewById(R.id.textViewDonor)).setText(plant.get_Donor());
         ((ImageView) dialogView.findViewById(R.id.imageViewPlant)).setImageBitmap(plant.get_Image());
-
+        dialogView.findViewById(R.id.deleteButton).setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                DataBase.deletePlant(plant);
+                Toast.makeText(MapsActivity.this, "Planta eliminada", Toast.LENGTH_SHORT).show();
+            }
+        });
         builder.setView(dialogView)
-                .setPositiveButton("Cerrar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                });
-
+        .setPositiveButton("Cerrar", new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int id)
+            {
+                dialog.cancel();
+            }
+        });
         final AlertDialog alert = builder.create();
         alert.setCanceledOnTouchOutside(false);
         alert.show();
@@ -322,11 +332,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         DataBase.addPlant(new Plant(0, "Planta 5", image, 9.9756239,-84.0180020, "Kevin", "Kevin"));
 */
-        plants = DataBase.getPlants();
         markerMapPlant.clear();
 
         BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.tree);
-        for (Plant plant : plants)
+        for (Plant plant : DataBase.getPlants())
         {
             MarkerOptions mOp = new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())).icon(icon);
             Marker marker = mMap.addMarker(mOp);
@@ -378,7 +387,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Bitmap myBitmap = BitmapFactory.decodeStream(input);
                 return myBitmap;
             } catch (IOException e) {
-                e.printStackTrace();
+                Toast.makeText(MapsActivity.context, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                 return null;
             }
         }
