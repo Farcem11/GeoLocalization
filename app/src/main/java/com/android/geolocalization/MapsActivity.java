@@ -67,6 +67,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     boolean isZoom = false;
     private Bitmap mImageBitmap;
     private String mCurrentPhotoPath;
+
+    public static ArrayList<Plant> plants;
     //form
     private EditText inputPlantName;
     private EditText inputPersonWhoPlanted;
@@ -102,10 +104,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         fab2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Aquí Jasson
+                showPlantsList();
             }
         });
     }
+
+    private void showPlantsList() {
+        Intent admin_plants = new Intent(this, PlantListActivity.class);
+        startActivity(admin_plants);
+    }
+
 
     private void dispatchTakePictureIntent() {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -335,7 +343,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerMapPlant.clear();
 
         BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.tree);
-        for (Plant plant : DataBase.getPlants())
+        plants = DataBase.getPlants();
+        for (Plant plant : plants)
         {
             MarkerOptions mOp = new MarkerOptions().position(new LatLng(plant.get_Latitude(), plant.get_Longitude())).icon(icon);
             Marker marker = mMap.addMarker(mOp);

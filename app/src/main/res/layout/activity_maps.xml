@@ -69,7 +69,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_assignment_black_24dp"
-            fab:fab_label="Capturar nueva planta"
+            fab:fab_label="Administrar plantas"
             fab:fab_size="mini" />
 
     </com.github.clans.fab.FloatingActionMenu>
